@@ -25,7 +25,11 @@ def test_unit():
     yaml_file = ""
 
     file_num = 0
-
+    for file_s in file_names:
+        if file_s[-5] == '.yaml':
+            yaml_file = file_s
+            is_yaml = 1
+            break    
     # f_yaml = open(yaml_file)
     print "Please wait to get the yaml data! name:\t %s" % yaml_file
     g_t1 = time.time()
