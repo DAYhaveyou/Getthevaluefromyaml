@@ -1,3 +1,4 @@
+# coding=utf-8
 import MySQLdb as mdb
 
 
@@ -20,10 +21,10 @@ def create_num_table(table, message):
                                  "Config_Parameters text not null," \
                                  "optimum_num int not null," \
                                  "optimum_period varchar(100) not null," \
-                                 "optimum_values text not null," \
+                                 "optimum_values MediumText not null," \
                                  "back_test_num int not null," \
                                  "back_test_period varchar(100) not null," \
-                                 "back_test_value text not null," \
+                                 "back_test_value MediumText not null," \
                                  "csv_name varchar(200) not null," \
                                  "PRIMARY KEY (csv1_id))"
 
@@ -55,6 +56,7 @@ def create_num_table(table, message):
     conn.close()
 
 
+# 创建基础筛选csv的指标
 def create_names_tables(table, table1, message):
     # name = ''
     sql = "create table %s(name_id int not null AUTO_INCREMENT," \
@@ -92,18 +94,23 @@ def insert_yaml(table, message, value):
     sql = "insert into %s (strategy, Config_WarmUp, Config_KBarPeriod_KBarTimeMin," \
           "Config_Parameters, optimum_num, optimum_period, optimum_values, back_test_num," \
           "back_test_period, back_test_value, csv_name)" % table
+    sql1 = 'insert into %s (strategy, Config_WarmUp, Config_KBarPeriod_KBarTimeMin,' \
+           'Config_Parameters, optimum_num, optimum_period, optimum_values, back_test_num,' \
+           'back_test_period, back_test_value, csv_name)' % table
 
-    t1 = " values('%s', %s, %s, '%s', %s, '%s', '%s', %s, '%s', '%s', '%s')"\
+    t1 = ' values("%s", %s, %s, "%s", %s, "%s", "%s", %s, "%s", "%s", "%s")'\
          % (value[0], value[1], value[2], value[3], value[4],
             value[5], value[6], value[7], value[8], value[9], value[10])
-    sql += t1
-    sql1 = "select last_insert_id()"
-
+    t2 = "values('"+str(value[0])+"', "+str(value[1])+", "+str(value[2])+", '"+str(value[3])+"', "+str(value[4])+", '"\
+         +str(value[5])+"', '"+str(value[6])+"', "+str(value[7])+", '"+str(value[8])+"', '"+str(value[9])+"', '"+str(value[10])+"')"
+    sql += t2
+    sql2 = "select last_insert_id()"
+    sql1 += t1
     conn = connect_database(message)
     cursor = conn.cursor()
-    cursor.execute(sql)
-    conn.commit()
     cursor.execute(sql1)
+    conn.commit()
+    cursor.execute(sql2)
     conn.commit()
 
     val = cursor.fetchone()
@@ -124,7 +131,7 @@ def insert_yaml(table, message, value):
                                  "back_test_value text not null," \
                                  "csv_name varchar(200) not null," \
                                  "PRIMARY KEY (csv1_id))"
-    return val
+    return val[0]
 
 
 def get_value_yaml(table, message):
@@ -138,14 +145,13 @@ def get_value_yaml(table, message):
 
     return val[0]
 
-message = ['127.0.0.1', 'root', '7ondr', 'test']
+message = ['127.0.0.1', 'root', '7ondr', 'testpy']
 table = 'yaml_table'
 
 value = ['test1rwer', 12.1, 12, 'test12', 6, 'test13', 'test14', 9, 'test15', 'test16', 'test11']
 
 # create_num_table(table, message)
-#  create_names_tables('test_name', 'yaml_table', message)
+
+# create_names_tables('test_name', 'yaml_table', message)
 
 # insert_yaml(table, message, value)
-
-
