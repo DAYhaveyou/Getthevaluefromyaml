@@ -246,6 +246,41 @@ def do_head_new_yaml(val1, val2):
     print vals
 
 
+def create_all_names(table, message):
+    sql = "create table %s (specie_id int not null AUTO_INCREMENT," \
+          "specie_name VARCHAR(100) not null," \
+          "specie_table_name VARCHAR(100) not null," \
+          "import_time TIMESTAMP  DEFAULT CURRENT_TIMESTAMP()," \
+          "import_operator VARCHAR(36) NOT NULL DEFAULT 'Likeyo'," \
+          "DB VARCHAR(100) NOT NULL," \
+          "PassWd VARCHAR(50) NOT NULL," \
+          "Server VARCHAR(60) NOT NULL," \
+          "Tablename VARCHAR(60) NOT NULL," \
+          "DB_User VARCHAR(60) NOT NULL," \
+          "Symbol_CR VARCHAR(10) NOT NULL," \
+          "Symbol_M VARCHAR(30) NOT NULL," \
+          "Symbol_MDT VARCHAR(30) NOT NULL," \
+          "Symbol_T VARCHAR(30) NOT NULL," \
+          "Setting_BV VARCHAR(10) NOT NULL," \
+          "Setting_OBJ_Fitness TintText NOT NULL," \
+          "Setting_OBJ_insam VARCHAR(100) NOT NULL," \
+          "Setting_OBJ_outsam VARCHAR(100) NOT NULL," \
+          "Setting_OBJ_vlsam VARCHAR(100) NOT NULL," \
+          "Setting_OBJ_SF VARCHAR(60) NOT NULL," \
+          "Setting_OptCont VARCHAR(10) NOT NULL," \
+          "Setting_OE_SPSO_E FLOAT NOT NULL," \
+          "Setting_OE_SPSO_EM FLOAT NOT NULL," \
+          "Setting_OE_SPSO_RM FLOAT NOT NULL," \
+          "Setting_ORS int NOT NULL," \
+          "Setting_SamRange_inSS int NOT NULL," \
+          "Setting_SamRange_outSRangeMonth int NOT NULL," \
+          "Setting_SamRange_outSS int NOT NULL," \
+          "Setting_TradeLots int NOT NULL," \
+          "PRIMARY KEY (specie_id))"
+
+    pass
+
+
 table1 = 'yaml_table'
 message1 = ['127.0.0.1', 'root', '7ondr', 'testpy']
 
@@ -260,3 +295,4 @@ head_val = [{'Data': {'Symbol': {'MktDataType': 'KBar', 'CommissionRatio': 'n', 
 # get_head()
 # load_head(head_val)
 # do_head()
+
