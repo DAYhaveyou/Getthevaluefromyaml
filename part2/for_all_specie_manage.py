@@ -179,10 +179,23 @@ def create_all_names(table, message):
     conn.close()
 
 
+def deal_dir_filename(name):
+    file_name = ''
+
+    for i in name:
+        if i != '/' and i != '\\':
+            file_name += i
+        else:
+            file_name = ''
+    return file_name
+
+
 # 进行存储一个品种
 def storage_values_specie(table_all, table_yaml, table_child, operator, message, file_name):
     f = open(file_name, 'r')
     value = yaml.load(f)
+    f.close()
+    file_name = deal_dir_filename(file_name)
     val_add = [table_all, table_yaml, operator, file_name, table_child]
     get_value = test_head_information(val_add, value[0], value[1])  # get it correctly!
     print len(get_value)
@@ -264,3 +277,5 @@ head_val = [{'Data': {'Symbol': {'MktDataType': 'KBar', 'CommissionRatio': 'n', 
 # create_all_names(table1, message1)
 # storage_values_specie(table1, 'yaml_table', 'test_name', 'show_me', message1, 'test_less.yaml')  # success
 # make_one_specie_yaml(table1, message1, 1)  # good!
+# deal_dir_filename('i9000/test/do.yaml')
+
