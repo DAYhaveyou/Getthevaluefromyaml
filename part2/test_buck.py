@@ -9,6 +9,7 @@ import get_index
 import yaml
 import get_yaml as yl
 import test_db
+import for_all_specie_manage as fm
 
 '''part 0'''
 # The comment
@@ -85,7 +86,7 @@ def deal_name(name):
 
 # (-_-)
 def storage_name(name, table_name, message, c_id=0):
-    sql = "insert into %s(name, fcsv_id) VALUES('%s', %d) " % (table_name, name, c_id)
+    sql = "insert into %s(name1, fcsv_id) VALUES('%s', %d) " % (table_name, name, c_id)
     print sql
     conn = connect_database(message)
     # conn = mdb.connect(host='127.0.0.1', user='root', passwd='7ondr', db='test')
@@ -95,8 +96,28 @@ def storage_name(name, table_name, message, c_id=0):
     conn.close()
 
 
+# use for name
+# get the stop loss and point value
+def get_name_stoploss_pointvalue(table, message):
+    sql = "select name1, stop_loss, point_value from %s" % table
+    conn = connect_database(message)
+    # conn = mdb.connect(host='127.0.0.1', user='root', passwd='7ondr', db='test')
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    val = []
+    values = cursor.fetchall()
+    # print values
+    for i in range(len(values)):
+        val.append(values[i])
+    # val1 = list(values)
+    # print val
+    conn.close()
+    return val
+
+
+# just get_name
 def get_name(table, message):
-    sql = "select name from %s" % table
+    sql = "select name1 from %s" % table
     conn = connect_database(message)
     # conn = mdb.connect(host='127.0.0.1', user='root', passwd='7ondr', db='test')
     cursor = conn.cursor()
@@ -139,7 +160,7 @@ def yaml_to_database(message, dir_name):
     file_names = os.listdir(dir_name)  # get the file names in dir_name
 
 
-def get_raw_data(dir_name, table, table2, message):
+def get_raw_data(table_all, dir_name, table, table2, message):
     is_yaml = 0
     file_name = ""
     file_names = os.listdir(dir_name)  # get the file names in dir_name
@@ -151,44 +172,62 @@ def get_raw_data(dir_name, table, table2, message):
             break
     if is_yaml == 0:
         return
-    file_name = dir_name+'\\'+file_name
+    print file_name
+    print 'success!'
+
+    '''
+    here need a name to make sure the single sort!
+    '''
+    file_temp_name = file_name  # 将要存储的文件
+    file_name = dir_name+'/'+file_name
     print "Please wait to get the yaml data! name:\t %s" % file_name
     g_t1 = time.time()
     f_value = open(file_name)
     raw_values = yaml.load(f_value)
     g_t2 = time.time()
+    '''
+    在这里需要加一个进行全局管理的函数将names 和 yaml 存入其中
+    同时 这两者的名字处理需要设定标准
+    '''
+
+    fm.storage_values_specie(table_all, table, table2, 'Likeyo', message, file_name)
     print "Load yaml over! Cost time: %.3f" % (g_t2 - g_t1)
     raw_values = raw_values
     g_all_length = len(raw_values)
     # print g_all_length
     print "Now read the data to move to database."
-    for i in range(g_all_length):
+    for i in range(2, g_all_length):
         value_temp = yl.deal_val_strategy(raw_values[i])
-        temp_id = test_db.insert_yaml(table, message, value_temp)
+        temp_id = test_db.insert_yaml(table2, message, value_temp)
         print "The insert value's csv_file name: %s " % value_temp[10]  # 0 1 2 3 4 5 6 7 8 9 10
         if value_temp[10] in file_names:
-            s = dir_name+'\\' + value_temp[10]
+            s = dir_name+'/' + value_temp[10]
             name = value_temp[10][:-4]
             name1 = deal_name(name)
             print name1
             create_table(name1, message)
             storage(name1, s, message)
-            storage_name(name1, table2, message, temp_id)
+            storage_name(name1, table, message, temp_id)
+    insert_index_names_16(table, message)
 
 
+# 需要与之对应的 更新操作者的名字和时间函数， 这里需要对16个指标都进行修改炒作
 def insert_index_names(table, message):
+    name_two_value = get_name_stoploss_pointvalue(table, message)
     names = get_name(table, message)
     '''
     sql = "insert into %s(NP, MDD, PpT, TT, ShR, Days, " \
           "D_WR, D_STD, D_MaxNP, D_MinNP, maxW_Days, maxL_Days, mDD_mC, mDD_iC)" \
           "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     '''
-    print names
+
     num = 0
 
     for name in names:
         t1 = time.time()
-        val = get_index.get_index14(name)  # get the index of table name
+        # 需要进行修改调用值
+        val = get_index.get_index14(name, message)  # get the index of table name it need a change!
+        val0_temp = get_index.get_index16(name, message)
         # val = []
         t3 = time.time()
         print 'single 1 time:\t', (t3 - t1)
@@ -198,6 +237,14 @@ def insert_index_names(table, message):
               val[0], val[0], val[0], val[0], val[0], \
               val[0], val[0], val[0], val[0], val[0], \
               val[0], val[0], val[0], val[0])
+
+        sql2 = "update " + table + " set NP=%s, MDD=%s, PpT=%s, TT=%s, ShR=%s, Days=%s, D_WR=%s, D_STD=%s, " \
+                                   "D_MaxNP=%s, D_MinNP=%s, maxW_Days=%s, maxL_Days=%s, mDD_mC=%s, mDD_iC=%s, " \
+                                   "LVRG=%s, LVRG_Mon_NP=%s where name='%s'" % (val[0], val[1], val[2], val[3], val[4],
+                                                                                val[5], val[6], val[7], val[8], val[9],
+                                                                                val[10], val[11], val[12], val[13],
+                                                                                val[10], val[11], name)
+
         sql1 = "update "+table+" set NP=%s, MDD=%s, PpT=%s, TT=%s, ShR=%s, Days=%s, D_WR=%s, D_STD=%s, D_MaxNP=%s," \
                                " D_MinNP=%s, maxW_Days=%s, maxL_Days=%s, mDD_mC=%s, mDD_iC=%s where name='%s'" % (
               val[0], val[1], val[2], val[3], val[4], \
@@ -214,6 +261,60 @@ def insert_index_names(table, message):
         print "num: %d\t" % num, (t2 - t1)
 
         print sql1
+        num += 1
+
+
+# change
+# right  :2018/3/24 20:51
+def insert_index_names_16(table, message):
+    name_two_value = get_name_stoploss_pointvalue(table, message)
+    # names = get_name(table, message)
+    '''
+    sql = "insert into %s(NP, MDD, PpT, TT, ShR, Days, " \
+          "D_WR, D_STD, D_MaxNP, D_MinNP, maxW_Days, maxL_Days, mDD_mC, mDD_iC)" \
+          "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    '''
+
+    num = 0
+
+    for val_3 in name_two_value:
+        t1 = time.time()
+        # 需要进行修改调用值
+        # get the index of table name it need a change!
+        val = get_index.get_index16(val_3[0], message, val_3[1], val_3[2])
+        # val = []
+        t3 = time.time()
+        print 'single 1 time:\t', (t3 - t1)
+        sql = "insert into "+table+"(NP, MDD, PpT, TT, ShR, Days, " \
+              "D_WR, D_STD, D_MaxNP, D_MinNP, maxW_Days, maxL_Days, mDD_mC, mDD_iC)" \
+              "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)" % (
+              val[0], val[0], val[0], val[0], val[0], \
+              val[0], val[0], val[0], val[0], val[0], \
+              val[0], val[0], val[0], val[0])
+
+        sql2 = "update " + table + " set NP=%s, MDD=%s, PpT=%s, TT=%s, ShR=%s, Days=%s, D_WR=%s, D_STD=%s, " \
+                                   "D_MaxNP=%s, D_MinNP=%s, maxW_Days=%s, maxL_Days=%s, mDD_mC=%s, mDD_iC=%s, " \
+                                   "LVRG=%s, LVRG_Mon_NP=%s where name1='%s'" % (val[0], val[1], val[2], val[3], val[4],
+                                                                                val[5], val[6], val[7], val[8], val[9],
+                                                                                val[10], val[11], val[12], val[13],
+                                                                                val[14], val[15], val_3[0])
+
+        sql1 = "update "+table+" set NP=%s, MDD=%s, PpT=%s, TT=%s, ShR=%s, Days=%s, D_WR=%s, D_STD=%s, D_MaxNP=%s," \
+                               " D_MinNP=%s, maxW_Days=%s, maxL_Days=%s, mDD_mC=%s, mDD_iC=%s where name1='%s'" % (
+              val[0], val[1], val[2], val[3], val[4], \
+              val[5], val[6], val[7], val[8], val[9], \
+              val[10], val[11], val[12], val[13], val_3[0])
+
+        conn = connect_database(message)
+        cursor = conn.cursor()
+        cursor.execute(sql2)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        t2 = time.time()
+        print "num: %d\t" % num, (t2 - t1)
+
+        print sql2
         num += 1
 
 
@@ -341,7 +442,7 @@ def create_names_table(name, table_f, message):
     conn = connect_database(message)
     # conn = mdb.connect(host='127.0.0.1', user='root', passwd='7ondr', db='test')
     sql = "create table %s(name_id int not null AUTO_INCREMENT," \
-          "name varchar(200) not null," \
+          "name1 varchar(200) not null," \
           "NP FLOAT DEFAULT 0.0," \
           "MDD  FLOAT DEFAULT 0.0," \
           "mDD_mC FLOAT DEFAULT 0.0," \
@@ -358,9 +459,37 @@ def create_names_table(name, table_f, message):
           "D_MinNP FLOAT DEFAULT 0.0," \
           "maxW_Days FLOAT DEFAULT 0.0," \
           "maxL_Days FLOAT DEFAULT 0.0," \
+          "stop_loss FLOAT DEFAULT 20," \
+          "point_value FLOAT DEFAULT 5," \
+          "origin_insert_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP()," \
+          "change_select_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP()," \
+          "origin_operator VARCHAR(36) DEFAULT 'Likeyo'," \
+          "select_operator VARCHAR(36) DEFAULT 'NO_ONE'," \
           "fcsv_id int not null DEFAULT 0," \
           "PRIMARY KEY (name_id)," \
           "constraint FK_fcsv_id foreign key(fcsv_id) references %s(csv1_id))" % (name, table_f)
+
+    # 未修改前版本
+    sql1 = "create table %s(name_id int not null AUTO_INCREMENT," \
+          "name1 varchar(200) not null," \
+          "NP FLOAT DEFAULT 0.0," \
+          "MDD  FLOAT DEFAULT 0.0," \
+          "mDD_mC FLOAT DEFAULT 0.0," \
+          "mDD_iC FLOAT DEFAULT 0.0," \
+          "LVRG FLOAT DEFAULT 0.0," \
+          "LVRG_Mon_NP FLOAT DEFAULT 0.0," \
+          "PpT  FLOAT DEFAULT 0.0," \
+          "TT FLOAT DEFAULT 0.0," \
+          "ShR  FLOAT DEFAULT 0.0," \
+          "Days FLOAT DEFAULT 0.0," \
+          "D_WR FLOAT DEFAULT 0.0," \
+          "D_STD FLOAT DEFAULT 0.0," \
+          "D_MaxNP FLOAT DEFAULT 0.0," \
+          "D_MinNP FLOAT DEFAULT 0.0," \
+          "maxW_Days FLOAT DEFAULT 0.0," \
+          "maxL_Days FLOAT DEFAULT 0.0," \
+          "PRIMARY KEY (name_id)," \
+          ")" % name
 
     cursor = conn.cursor()
     cursor.execute(sql)
@@ -369,6 +498,7 @@ def create_names_table(name, table_f, message):
 
 
 # build the table that related with names table
+# this version is good!
 def create_yaml_table(table, message):
 
     sql1 = "create table "+table+"(csv1_id int not null AUTO_INCREMENT," \
@@ -527,8 +657,7 @@ def delete_csv_table(table, message):
 
 def delete_value(table, database):
     try:
-        # conn = mdb.connect(host='127.0.0.1', user='root', passwd='7ondr', db='test')
-        conn = database
+        conn = connect_database(database)
         sql = 'TRUNCATE TABLE ' + table
         print sql
         cursor = conn.cursor()
@@ -553,12 +682,16 @@ def delete_table(table_name, database):
 
 
 message = ['127.0.0.1', 'root', '7ondr', 'testpy']
-
+table1 = 'all_species_table_test1'
 # create_table('show_me', message)
-# create_names_table('test_name', 'yaml_table', message)
+# create_names_table('test_name_new', 'yaml_table_test', message)
 # storage('show_me', 'test.csv', message)
 # csv_to_database(message)
-
+# delete_value('all_species_table_test1', message)
 # insert_index_names('names', message)
-# delete_csv_table('names', message)
-# create_yaml_table('yaml_table', message)
+# delete_csv_table('test_name_new', message)
+# create_yaml_table('yaml_table_test', message)  # 针对每一个品种都需要一个yaml——table 和一个 name table1
+
+get_raw_data(table_all=table1, dir_name='test1', table='test_name_new', table2='yaml_table_test', message=message)
+# insert_index_names_16('test_name_new', message)
+
