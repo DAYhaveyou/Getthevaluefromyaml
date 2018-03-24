@@ -1,5 +1,7 @@
 # coding=utf-8
 import MySQLdb as mdb
+import yaml
+import get_yaml as yl
 
 
 def connect_database(message):
@@ -77,6 +79,12 @@ def create_names_tables(table, table1, message):
           "D_MinNP FLOAT DEFAULT 0.0," \
           "maxW_Days FLOAT DEFAULT 0.0," \
           "maxL_Days FLOAT DEFAULT 0.0," \
+          "stop_loss FLOAT DEFAULT 20," \
+          "point_value FLOAT DEFAULT 5," \
+          "origin_insert_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP()," \
+          "change_select_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP()," \
+          "origin_operator VARCHAR(36) DEFAULT 'Likeyo'," \
+          "select_operator VARCHAR(36) DEFAULT 'NO_ONE'," \
           "fcsv_id int," \
           "PRIMARY KEY (name_id)," \
           "constraint FK_fcsv_id foreign key(fcsv_id) references %s(csv1_id))" % (table, table1)
@@ -87,6 +95,17 @@ def create_names_tables(table, table1, message):
     cursor.execute(sql)
     conn.commit()
     conn.close()
+
+
+def test_insert_yaml_table(file_name, table2, message):
+    f = open(file_name)
+
+    raw_value = yaml.load(f)
+
+    for i in range(2, len(raw_value)):
+        val = yl.deal_val_strategy(raw_value[i])
+        insert_yaml(table2, message, val)
+    print "Success!"
 
 
 # in here, we need a single and one by one
@@ -155,3 +174,5 @@ value = ['test1rwer', 12.1, 12, 'test12', 6, 'test13', 'test14', 9, 'test15', 't
 # create_names_tables('test_name', 'yaml_table', message)
 
 # insert_yaml(table, message, value)
+# test_insert_yaml_table('test_less.yaml', table, message)
+
