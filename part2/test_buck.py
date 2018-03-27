@@ -211,6 +211,62 @@ def get_raw_data(table_all, dir_name, table, table2, message):
     insert_index_names_16(table, message)
 
 
+def get_raw_data_selected_good(table_all, dir_name, table, table2, message, file_name_vals):
+    is_yaml = 0
+    file_name = ""
+    file_names = os.listdir(dir_name)  # get the file names in dir_name
+    # just ready for a file have one yaml file, if need more Please find all
+    for file_s in file_names:
+        if file_s[-5:] == '.yaml':
+            file_name = file_s
+            is_yaml = 1
+            break
+    if is_yaml == 0:
+        return
+    print file_name
+    print 'success!'
+
+    '''
+    here need a name to make sure the single sort!
+    '''
+    file_temp_name = file_name  # 将要存储的文件
+    file_name = dir_name+'/'+file_name
+    print "Please wait to get the yaml data! name:\t %s" % file_name
+    g_t1 = time.time()
+    f_value = open(file_name)
+    raw_values = yaml.load(f_value)
+    g_t2 = time.time()
+    '''
+    在这里需要加一个进行全局管理的函数将names 和 yaml 存入其中
+    同时 这两者的名字处理需要设定标准
+    '''
+
+    fm.storage_values_specie(table_all, table, table2, 'Likeyo', message, file_name)
+    print "Load yaml over! Cost time: %.3f" % (g_t2 - g_t1)
+    raw_values = raw_values
+    g_all_length = len(raw_values)
+    # print g_all_length
+    print "Now read the data to move to database."
+
+    # in here create csv table and storage it, make name's can do it and yaml tables have it's information
+    for i in range(2, g_all_length):
+        value_temp = yl.deal_val_strategy(raw_values[i])
+
+        if value_temp[10] in file_name_vals:
+            temp_id = test_db.insert_yaml(table2, message, value_temp)
+            print "The insert value's csv_file name: %s " % value_temp[10]  # 0 1 2 3 4 5 6 7 8 9 10
+            if value_temp[10] in file_names:
+                s = dir_name + '/' + value_temp[10]
+                name = value_temp[10][:-4]
+                name1 = deal_name(name)
+                print name1
+                create_table(name1, message)
+                storage(name1, s, message)
+                storage_name(name1, table, message, temp_id)
+    insert_index_names_16(table, message)
+    
+    
+
 # 需要与之对应的 更新操作者的名字和时间函数， 这里需要对16个指标都进行修改炒作
 def insert_index_names(table, message):
     name_two_value = get_name_stoploss_pointvalue(table, message)
